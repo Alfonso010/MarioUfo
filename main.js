@@ -12,6 +12,8 @@ const STATE = {
   y_pos : 0,
   move_right: false,
   move_left: false,
+  move_up: false,
+  move_down: false,
   shoot: false,
   lasers: [],
   enemyLasers: [],
@@ -34,7 +36,7 @@ function setSize($element, width) {
   $element.style.height = "auto";
 }
 
-function bound(x){
+function bound_x(x){
   if (x >= GAME_WIDTH-STATE.spaceship_width){
     STATE.x_pos = GAME_WIDTH-STATE.spaceship_width;
     return GAME_WIDTH-STATE.spaceship_width
@@ -44,6 +46,17 @@ function bound(x){
   } else {
     return x;
   }
+}
+function bound_y(y) {
+    if (y >= GAME_HEIGHT - STATE.spaceship_width) {
+        STATE.y_pos = GAME_HEIGHT - STATE.spaceship_width;
+        return GAME_HEIGHT - STATE.spaceship_width
+    } if (y <= 0) {
+        STATE.y_pos = 0;
+        return 0
+    } else {
+        return y;
+    }
 }
 
 function collideRect(rect1, rect2){
@@ -80,7 +93,16 @@ function updateEnemies($container){
       createEnemyLaser($container, a, b);
       enemy.enemy_cooldown = Math.floor(Math.random()*50)+100 ;
     }
-    enemy.enemy_cooldown -= 0.5;
+      enemy.enemy_cooldown -= 0.5;
+
+    for (let i = 0; i < enemies.length; i++) {
+          const enemy = enemies[i];
+        const enemy_rectangle = enemy.$enemy.getBoundingClientRect();
+        const spaceship_rectangle = document.querySelector(".player").getBoundingClientRect();
+        if (collideRect(enemy_rectangle, spaceship_rectangle)) {
+              STATE.gameOver = true;
+          }
+      }
   }
 }
 
@@ -101,12 +123,17 @@ function updatePlayer(){
     STATE.x_pos -= 3;
   } if(STATE.move_right){
     STATE.x_pos += 3;
-  } if(STATE.shoot && STATE.cooldown == 0){
+    } if (STATE.move_up) {
+        STATE.y_pos -= 3;
+    } if (STATE.move_down) {
+        STATE.y_pos += 3;
+    } 
+    if (STATE.shoot && STATE.cooldown == 0) {
     createLaser($container, STATE.x_pos - STATE.spaceship_width/2, STATE.y_pos);
     STATE.cooldown = 30;
   }
   const $player = document.querySelector(".player");
-  setPosition($player, bound(STATE.x_pos), STATE.y_pos-10);
+    setPosition($player, bound_x(STATE.x_pos), bound_y(STATE.y_pos));
   if(STATE.cooldown > 0){
     STATE.cooldown -= 0.5;
   }
@@ -188,6 +215,10 @@ function KeyPress(event) {
     STATE.move_right = true;
   } else if (event.keyCode === KEY_LEFT) {
     STATE.move_left = true;
+  } else if (event.keyCode === KEY_UP) {
+      STATE.move_up = true;
+  } else if (event.keyCode === KEY_DOWN) {
+      STATE.move_down = true;
   } else if (event.keyCode === KEY_SPACE) {
     STATE.shoot = true;
   }
@@ -197,7 +228,11 @@ function KeyRelease(event) {
   if (event.keyCode === KEY_RIGHT) {
     STATE.move_right = false;
   } else if (event.keyCode === KEY_LEFT) {
-    STATE.move_left = false;
+      STATE.move_left = false;
+  } else if (event.keyCode === KEY_UP) {
+      STATE.move_up = false;
+  } else if (event.keyCode === KEY_DOWN) {
+    STATE.move_down = false;
   } else if (event.keyCode === KEY_SPACE) {
     STATE.shoot = false;
   }
